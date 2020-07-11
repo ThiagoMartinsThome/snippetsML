@@ -1,0 +1,4 @@
+# Altair snippets
+
+## Import altair
+

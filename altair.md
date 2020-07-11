@@ -4,40 +4,55 @@
 brain = pd.read_csv("https://raw.githubusercontent.com/rezpe/datos_viz/master/brain.csv")
 ```
 
-## Import altair
+# Import altair
+
 ```python
 import altair as alt
-```
-## Bar Chart
-```python
-alt.Chart(brain).mark_bar().encode(
-    x = alt.X('Brain Weight', bin=True),
-    y=  'count()'  
-)
-# Choosing bins size
-
-alt.Chart(brain).mark_bar().encode( 
-  x=alt.X('Body Weight',bin=alt.Bin(maxbins=100)), 
-  y="count()" 
-).interactive()
-```
-## Line Chart
-```python
-alt.Chart(trends).mark_line().encode(
-    x=alt.X('yearmonth(date):T'),# :T converte a temporal
-    y=alt.Y('mean(value)'),
-    color='search_term'
-)
-```
-## Scatter Chart
-```python
-alt.Chart(brain).mark_point().encode(
-    x = 'Brain Weight',
-    y=  'Body Weight'
-)
+# if in notebook
+alt.renderers.enable("notebook")
 ```
 
-## Map Chart
+# Histogram
+
+```python
+alt.Chart(df).mark_bar().encode(
+    x=alt.X('Brain Weight',bin=True,title="Brain Weight Binned"),
+    y="count()"
+).properties(
+    width=200,
+    height=200,
+    title="Histogram of Brain Weight"
+)
+``` 
+
+# Scatter Plot 
+
+```python
+scatter = alt.Chart(df).mark_circle().encode(
+    x="Body Weight",
+    y="Brain Weight"
+)
+``` 
+# Bar Chart
+```python
+trends_bar=alt.Chart(trends).mark_bar().encode(
+    x="search_term",
+    y="sum(value)",
+    color="search_term"
+)
+```
+
+# Line Chart
+```python
+trends_line=alt.Chart(trends).mark_line().encode(
+    x=alt.X("date:T",timeUnit="yearmonth"),
+    y="sum(value)",
+    color="search_term"
+)
+```
+
+
+# Map Chart
 ```python
 states = alt.topo_feature("https://unpkg.com/world-atlas@1.1.4/world/110m.json",feature="countries") 
 
@@ -61,56 +76,162 @@ height=800
 )
 ```
 
-## Horizontal and Vertical composition
+# Horizontal concatenation
+
 ```python
-#Horizontal: use the "&" symbol
-scatter_bb & histo_body
-
-#Vertical: use the "|" symbol
-scatter_bb | histo_body
-
-#Combined: use the "&" and "|" symbol
-scatter_bb & (histo_body|histo_brain)
+trends_bar|trends_line
 ```
-## Interval selection
+
+# Vertical concatenation
 
 ```python
-# Use single for single selection and interval for interval selection
+trends_bar&trends_line
+```
 
-temp = weather.groupby(["date","country"]).mean().reset_index() 
+# Single selection
 
-select_country = alt.selection(type="single",encodings=["x"]) 
+```python
+select_search_term = alt.selection_single(encodings=["x"])
 
- 
-
-line_weather = alt.Chart(temp).mark_line().encode( 
-x='date', 
-y="mean(temp)" 
-).properties( 
-width=800, 
-height=200,
-selection=select_country 
-) .transform_filter(
-    select_country
-) 
-
-bar_weather = alt.Chart(temp).mark_bar().encode( 
-x=alt.X('country', 
-sort=alt.Sort(field="temp", 
-op="mean", 
-order="descending"), 
-axis=alt.Axis(labels=False) 
-), 
-y="mean(temp)", 
-tooltip="country" 
-).properties( 
-width=800, 
-height=200,
-selection=select_country  
+trends_line=alt.Chart(trends).mark_line().encode(
+    x=alt.X("date:T",timeUnit="yearmonth"),
+    y="sum(value)",
+    color="search_term"
+).transform_filter(
+    select_search_term
 )
 
-bar_weather&line_weather
+trends_bar=alt.Chart(trends).mark_bar().encode(
+    x="search_term",
+    y="sum(value)",
+    color="search_term"
+).properties(
+    selection=select_search_term
+)
+
+trends_bar|trends_line
 ```
 
+# Interval Selection
 
+```python
+selection = alt.selection_interval(encodings=["x"])
+
+trends_line=alt.Chart(trends).mark_line().encode(
+    x=alt.X("date:T",timeUnit="yearmonth"),
+    y="sum(value)",
+    color="search_term"
+).transform_filter(
+    selection
+)
+
+trends_line_small=alt.Chart(trends).mark_line().encode(
+    x=alt.X("date:T",timeUnit="yearmonth"),
+    y="sum(value)",
+    color="search_term"
+).properties(
+    height=50,
+    selection=selection
+)
+
+(trends_line&trends_line_small)
+```
+
+## Custom config
+```python
+config = {'arc': {'fill': '#30a2da'}, 
+'area': {'fill': 'black'}, 
+'axisBand': {'grid': False}, 
+'axisBottom': {'domain': False, 
+'domainColor': '#999', 
+'domainWidth': 3, 
+'grid': False, 
+'gridColor': '#cbcbcb', 
+'gridWidth': 1, 
+'labelColor': '#999', 
+'labelFontSize': 14, 
+'labelPadding': 4, 
+'tickColor': 'white', 
+'tickSize': 10, 
+'titleFontSize': 14, 
+'titlePadding': 10}, 
+'axisLeft': {'domainColor': 'white', 
+'domainWidth': 1, 
+'grid': False, 
+'gridColor': 'white', 
+'gridWidth': 1, 
+'labelColor': 'white', 
+'labelFontSize': 10, 
+'labelPadding': 4, 
+'tickColor': 'white', 
+'tickSize': 10, 
+'ticks': True, 
+'titleFontSize': 14, 
+'titlePadding': 10}, 
+'axisRight': {'domainColor': '#333',
+'domainWidth': 1, 
+'grid': True, 
+'gridColor': '#cbcbcb', 
+'gridWidth': 1, 
+'labelColor': 'white', 
+'labelFontSize': 10, 
+'labelPadding': 4, 
+'tickColor': 'white', 
+'tickSize': 10, 
+'ticks': True, 
+'titleFontSize': 14, 
+'titlePadding': 10}, 
+'axisTop': {'domain': False, 
+'domainColor': '#333', 
+'domainWidth': 3, 
+'grid': False, 
+'gridColor': '#cbcbcb', 
+'gridWidth': 1, 
+'labelColor': '#999', 
+'labelFontSize': 10, 
+'labelPadding': 4, 
+'tickColor': '#cbcbcb', 
+'tickSize': 10, 
+'titleFontSize': 14, 
+'titlePadding': 10}, 
+'background': 'white', 
+'group': {'fill': 'black',"stroke":"white"}, 
+'legend': {'labelColor': '#333', 
+'labelFontSize': 14, 
+'padding': 1, 
+'symbolSize': 30, 
+'symbolType': 'square', 
+'titleColor': '#333', 
+'titleFontSize': 14, 
+'titlePadding': 10}, 
+'line': {'stroke': '#30a2da', 'strokeWidth': 2}, 
+'path': {'stroke': '#30a2da', 'strokeWidth': 0.5}, 
+'rect': {'fill': '#30a2da'}, 
+'range': {'category': ['#30a2da', 
+'#fc4f30', 
+'#e5ae38', 
+'#6d904f', 
+'#8b8b8b', 
+'#b96db8', 
+'#ff9e27', 
+'#56cc60', 
+'#52d2ca', 
+'#52689e', 
+'#545454', 
+'#9fe4f8'], 
+'diverging': ['#cc0020', 
+'#e77866', 
+'#f6e7e1', 
+'#d6e8ed', 
+'#91bfd9', 
+'#1d78b5'], 
+'heatmap': ['#d6e8ed', '#cee0e5', '#91bfd9', '#549cc6', '#1d78b5']}, 
+'symbol': {'filled': True, 'shape': 'circle'}, 
+'shape': {'stroke': 'white'}, 
+'style': {'bar': {'binSpacing': 2, 'fill': '#30a2da', 'stroke': None}}, 
+'title': {'anchor': 'start', 'fontSize': 24, 'fontWeight': 600, 'offset': 20},
+"view": { 
+"stroke": "transparent" 
+}}
+```
 
